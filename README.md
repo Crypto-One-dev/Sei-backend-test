@@ -53,6 +53,9 @@ seid query wasm contract-state smart $contract_addr '{"get_balance": {"account":
 
 # withdraw
 
-seid tx wasm execute $contract_addr '{"withdraw": {"coins": [{"denom": "usei", "amount": "5000" }]}}' --from "wallet name" --gas=4000000 --fees=1000000usei --chain-id sei-chain --broadcast-mode block
+If you deposit 10000usei then each receiver will receive 4900 usei.
+Owner will receive 200usei because default fee is 2.
+
+seid tx wasm execute $contract_addr '{"withdraw": {"coins": [{"denom": "usei", "amount": "4900" }]}}' --from "wallet name" --gas=4000000 --fees=1000000usei --chain-id sei-chain --broadcast-mode block
 
 ```
