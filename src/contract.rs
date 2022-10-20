@@ -14,7 +14,7 @@ use sei_cosmwasm::SeiQueryWrapper;
 use semver::{Error as SemErr, Version};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:clearing-house";
+const CONTRACT_NAME: &str = "crates.io:sei-test";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // NOTE: New migrations may need store migrations if store changes are being made

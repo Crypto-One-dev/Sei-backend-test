@@ -27,8 +27,8 @@ docker run --rm -v "$(pwd)":/code \
 
 ```
 cd scripts/deployment
-chmod 755 spot_deploy.sh
-./spot_deploy.sh
+chmod 755 sei_test_deploy.sh
+./sei_test_deploy.sh
 ```
 
 # Interact with Sei test contract
