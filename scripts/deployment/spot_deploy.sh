@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -n Customized clearing_house Contract \(../../artifacts/spot_lite.wasm by default\):
+echo -n Customized clearing_house Contract \(../../artifacts/sei_backend_test.wasm by default\):
 read contract
 echo
 echo -n Customized Key Name:\(admin by default\)
@@ -11,7 +11,7 @@ read password
 echo
 
 if [ -z "${contract}" ];
-then contract=../../artifacts/spot_lite.wasm
+then contract=../../artifacts/sei_backend_test.wasm
 fi 
 if [ -z "${keyname}" ];
 then keyname=William_wallet
