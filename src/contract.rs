@@ -4,7 +4,7 @@ use crate::msg::{
     ExecuteMsg, GetBalanceResponse, InstantiateMsg,
     MigrateMsg, QueryMsg, SudoMsg, GetOwnerResponse
 };
-use crate::owner::{get_owner, set_owner};
+use crate::owner::{get_owner, set_owner, set_fee, get_fee};
 use cosmwasm_std::{
     entry_point, to_binary, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Env, MessageInfo,
     Response, StdError, StdResult, Uint128,
@@ -56,6 +56,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     set_owner(deps.storage, msg_info.sender.to_string())?;
+    set_fee(deps.storage, Uint128::from(2u128))?;
     Ok(Response::default())
 }
 
@@ -107,6 +108,7 @@ pub fn execute(
         ExecuteMsg::Deposit {receiver1, receiver2} => deposit(deps, info, receiver1, receiver2),
         ExecuteMsg::Withdraw { coins } => withdraw(deps, info, coins ),
         ExecuteMsg::SetOwner { owner } => set_new_owner(deps, owner),
+        ExecuteMsg::SetFee { fee } => set_new_fee(deps, fee),
     }
 }
 
@@ -115,12 +117,23 @@ fn set_new_owner(deps: DepsMut<SeiQueryWrapper>, owner: String) -> Result<Respon
     Ok(Response::default())
 }
 
+fn set_new_fee(deps: DepsMut<SeiQueryWrapper>, fee: Uint128) -> Result<Response, ContractError> {
+    set_fee(deps.storage, fee)?;
+    Ok(Response::default())
+}
+
 fn deposit(deps: DepsMut<SeiQueryWrapper>, info: MessageInfo, receiver1: String, receiver2: String) -> Result<Response, ContractError> {
     for coin in info.funds {
         let mut receiver1_bal = get_balance(deps.storage, receiver1.to_owned(), coin.denom.to_owned());
         let mut receiver2_bal = get_balance(deps.storage, receiver2.to_owned(), coin.denom.to_owned());
-        receiver1_bal.amount += Decimal::from_atomics(coin.amount / Uint128::from(2u128), 0).unwrap();
-        receiver2_bal.amount += Decimal::from_atomics(coin.amount - coin.amount / Uint128::from(2u128), 0).unwrap();
+        let owner = get_owner(deps.storage)?;
+        let mut owner_bal = get_balance(deps.storage, owner.account.to_owned(), coin.denom.to_owned());
+        let fee= get_fee(deps.storage).unwrap();
+        let total_bal = coin.amount * (Uint128::from(100u128) - fee.fee) / Uint128::from(100u128);
+        let owner_fee = coin.amount *fee.fee / Uint128::from(100u128);
+        receiver1_bal.amount += Decimal::from_atomics(total_bal / Uint128::from(2u128), 0).unwrap();
+        receiver2_bal.amount += Decimal::from_atomics(total_bal- total_bal / Uint128::from(2u128), 0).unwrap();
+        owner_bal.amount += Decimal::from_atomics(owner_fee, 0).unwrap();
         save_balance(
             deps.storage,
             receiver1.to_owned(),
@@ -132,6 +145,12 @@ fn deposit(deps: DepsMut<SeiQueryWrapper>, info: MessageInfo, receiver1: String,
             receiver2.to_owned(),
             coin.denom.to_owned(),
             &receiver2_bal,
+        );
+        save_balance(
+            deps.storage,
+            owner.account.to_owned(),
+            coin.denom.to_owned(),
+            &owner_bal,
         )
     }
     Ok(Response::default())

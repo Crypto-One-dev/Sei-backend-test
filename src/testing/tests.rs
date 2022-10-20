@@ -8,7 +8,7 @@ use crate::msg::{
 use crate::state::{ Balance };
 use crate::testing::mock_querier::mock_dependencies;
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{from_binary, Coin, Decimal, StdError};
+use cosmwasm_std::{from_binary, Coin, Decimal, StdError, Uint128};
 
 #[test]
 fn test_owner_query() {
@@ -65,7 +65,7 @@ fn test_owner_query() {
 }
 
 #[test]
-fn test_deposit_withdraw() {
+fn test_deposit_withdraw_fee() {
     let mut deps = mock_dependencies(&vec![]);
     let env = mock_env();
     instantiate(
@@ -73,6 +73,17 @@ fn test_deposit_withdraw() {
         env,
         mock_info("admin", &[]),
         InstantiateMsg {},
+    )
+    .unwrap();
+
+
+    let fee_value = Uint128::from(4u128);
+    let msg = ExecuteMsg::SetFee { fee: fee_value };
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("admin", &vec![Coin::new(0, "usei")]),
+        msg,
     )
     .unwrap();
 
@@ -88,11 +99,14 @@ fn test_deposit_withdraw() {
     )
     .unwrap();
 
+    let owner_bal = get_balance(deps.as_ref().storage, "admin".to_owned(), "usei".to_owned());
+    assert_eq!(owner_bal.amount, Decimal::from_atomics(4u128, 0).unwrap());
+
     let balance1 = get_balance(deps.as_ref().storage, "receiver1".to_owned(), "usei".to_owned());
-    assert_eq!(balance1.amount, Decimal::from_atomics(50u128, 0).unwrap());
+    assert_eq!(balance1.amount, Decimal::from_atomics(48u128, 0).unwrap());
 
     let balance2 = get_balance(deps.as_ref().storage, "receiver2".to_owned(), "usei".to_owned());
-    assert_eq!(balance2.amount, Decimal::from_atomics(50u128, 0).unwrap());
+    assert_eq!(balance2.amount, Decimal::from_atomics(48u128, 0).unwrap());
 
     assert_eq!(balance1.withheld, Decimal::zero());
     assert_eq!(balance2.withheld, Decimal::zero());
@@ -105,7 +119,7 @@ fn test_deposit_withdraw() {
         Err(_) => (),
     };
     let msg = ExecuteMsg::Withdraw {
-        coins: vec![Coin::new(49, "usei")],
+        coins: vec![Coin::new(47, "usei")],
     };
     execute(deps.as_mut(), mock_env(), mock_info("receiver1", &[]), msg).unwrap();
     let balance = get_balance(deps.as_ref().storage, "receiver1".to_owned(), "usei".to_owned());

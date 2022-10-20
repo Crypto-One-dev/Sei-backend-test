@@ -1,7 +1,7 @@
 use crate::state::{
     Balance, Owner,
 };
-use cosmwasm_std::{ Coin };
+use cosmwasm_std::{ Coin, Uint128 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -42,4 +42,5 @@ pub enum ExecuteMsg {
     Deposit {receiver1: String, receiver2: String},
     Withdraw { coins: Vec<Coin> },
     SetOwner{ owner: String },
+    SetFee {fee: Uint128},
 }
